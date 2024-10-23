@@ -44,7 +44,6 @@ async function mainMenu() {
         console.log('Have a nice day!')
         process.exit();
     }
-    await mainMenu();
   });
 }
 
@@ -55,6 +54,7 @@ async function viewAllDepartments() {
   // TODO: handle errors
   console.table(result.rows);
   client.release();
+  mainMenu();
 }
 async function viewAllRoles() {
   const client = await pool.connect();
@@ -62,6 +62,7 @@ async function viewAllRoles() {
   // TODO: handle errors
   console.table(result.rows);
   client.release();
+  mainMenu();
 }
 // function to view all employees on a table
 async function viewAllEmployees() {
@@ -70,6 +71,7 @@ async function viewAllEmployees() {
   // TODO: handle errors
   console.table(result.rows);
   client.release();
+  mainMenu();
 }
 
 async function addDepartment() {
@@ -86,6 +88,7 @@ async function addDepartment() {
     await client.query('INSERT INTO department (department_name) VALUES ($1)', [departmentName]);
     console.log(`Department "${departmentName}" added successfully.`);
     client.release();
+    mainMenu();
   } catch (err) {
     console.error('Error adding department:', err);
   }
@@ -134,6 +137,7 @@ async function addRole() {
     console.table(result.rows);
 
     client.release();
+    mainMenu();
     // release connection from the pool
   } catch (err) {
     console.error('Error inserting role:', err);
@@ -147,12 +151,12 @@ async function addEmployee() {
   const client = await pool.connect();
 
   try {
-
-    const currentEmployees = await client.query('SELECT (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4) FROM employee');
-    // display employees for the user
-    console.log('Current employes')
-    console.table(currentEmployees.rows)
-
+  
+  const currentEmployees = await client.query('SELECT * FROM employee');
+  // display employees for the user
+  console.log('Current employes')
+  console.table(currentEmployees.rows)
+  
     const employee = await inquirer.prompt([
       // get new title from user
       {
@@ -160,6 +164,7 @@ async function addEmployee() {
         name: 'firstName',
         type: 'input',
       },
+
       //get new salary from user
       {
         message: 'New last name?',
@@ -178,19 +183,19 @@ async function addEmployee() {
         type: 'input',
       }
     ]);
-
+   console.log(employee);
 
     // Parameterized query for insertion
-    const query = 'INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4) returning *;';
+    const query = 'INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4);';
     // Pass your parameters in an array
     const values = [employee.firstName, employee.lastName, employee.roleId, employee.managerId];
     // execute and return
-    const result = await client.query(query, values);
+    await client.query(query, values);
     // console log result
     console.log(`New employee "${employee.firstName}" "${employee.lastName}" added successfully!`)
-    console.table(result.rows);
 
     client.release();
+    mainMenu();
     // release connection from the pool
   } catch (err) {
     console.error('Error inserting new employee:', err);
@@ -215,19 +220,16 @@ try {
   ])
   .then(async(response: any) => {
     await client.query(`UPDATE employee FROM SET role_id = ${response.employeeRole} WHERE id = ${response.employeeId} RETURNING *`, (_err: Error, _result: QueryResult) => {
-    // const query = 'UPDATE employee FROM SET role_id = $1 WHERE id = $2 RETURNING *';
-    // const value = [response.employeeRole, response.employeeId]
-    // const result = await client.query()
+   
     console.log('Updated successfully!');
     // console.table(result.rows);
     });
   } );
+    client.release();
+    mainMenu();
 }catch
   (err) {
     console.error('Error updating employee role:', err);
   }
 } 
-
-
-
 mainMenu();
