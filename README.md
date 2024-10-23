@@ -20,12 +20,13 @@
  - Clone the repository to your local machine: git clone <https://github.com/kyand38/WorkFlow-Wizard>
  - Navigate to the project directory: cd WorkFlow-Wizard
  - Install dependencies: npm install
- - Set up the PostgreSQL database: Run the SQL schema using: \i schema.sql
+ - Set up the PostgreSQL database: Run the SQL schema using: \i schema.sql \c
  - Configure environment variables by creating a .env file (e.g., DB_NAME, DB_USER, DB_PASSWORD).
- - Start the application: node src/app.js
+ - Start the application: npm run start
 
 ## Usage:
-
+ 
+ - Here's a link to a demonstration: [Demo](https://drive.google.com/file/d/1NfzJKM4aczJ76tInmfGUIh3Ey10eAxa0/view)
  - Once the application is installed, run the following command from the corresponding terminal to start the app: node src/app.js
  - Follow the prompts to view and manage departments, roles, and employees. For example:
  - Select "View All Employees" to see a table of employee details.

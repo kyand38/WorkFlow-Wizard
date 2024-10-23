@@ -1,7 +1,7 @@
 import inquirer from 'inquirer';
 import { pool } from './connection.js';
 async function mainMenu() {
-    inquirer.prompt({
+    await inquirer.prompt({
         message: "What do you want to do?",
         type: "list",
         name: "choose",
@@ -35,11 +35,11 @@ async function mainMenu() {
             case 'Add an Employee':
                 addEmployee();
                 break;
-            // case 'Update Employee Role':
-            //   updateEmployeeRole();
-            //   break;
+            case 'Update Employee Role':
+                updateEmployeeRole();
+                break;
             case 'Exit':
-                console.log('Take care!');
+                console.log('Have a nice day!');
                 process.exit();
         }
         await mainMenu();
@@ -62,7 +62,7 @@ async function viewAllRoles() {
 // function to view all employees on a table
 async function viewAllEmployees() {
     const client = await pool.connect();
-    const result = await client.query('SELECT first_name, last_name FROM employee');
+    const result = await client.query('SELECT * FROM employee');
     // TODO: handle errors
     console.table(result.rows);
     client.release();
@@ -88,11 +88,11 @@ async function addDepartment() {
 async function addRole() {
     const client = await pool.connect();
     try {
-        //query and log current departments with id
-        const currentDepartments = await client.query('SELECT id, department_name FROM department');
-        // display departments for the user
-        console.log('Available departments');
-        console.table(currentDepartments.rows);
+        //query and log current roles
+        const currentRoles = await client.query('SELECT title, department_id FROM role');
+        // display roles for the user
+        console.log('Current roles');
+        console.table(currentRoles.rows);
         const role = await inquirer.prompt([
             // get new title from user
             {
@@ -106,7 +106,7 @@ async function addRole() {
                 name: 'newSalary',
                 type: 'input',
             },
-            // get new department from user
+            // get new department id from user
             {
                 message: 'Enter the department id from the above table.',
                 name: 'newDepartment',
@@ -129,10 +129,13 @@ async function addRole() {
         console.error('Error inserting role:', err);
     }
 }
-// first_name, last_name, role_id, manager_id
 async function addEmployee() {
     const client = await pool.connect();
     try {
+        const currentEmployees = await client.query('SELECT (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4) FROM employee');
+        // display employees for the user
+        console.log('Current employes');
+        console.table(currentEmployees.rows);
         const employee = await inquirer.prompt([
             // get new title from user
             {
@@ -148,20 +151,20 @@ async function addEmployee() {
             },
             // get new department from user
             {
-                message: 'Enter role id',
+                message: 'Enter role id number',
                 name: 'roleId',
                 type: 'input',
             },
             {
-                message: 'Enter the department id from the above table.',
-                name: 'departmentId',
+                message: 'Enter the manager id from the above table.',
+                name: 'managerId',
                 type: 'input',
             }
         ]);
         // Parameterized query for insertion
-        const query = 'INSERT INTO role (title, salary, department_id)VALUES ($1, $2, $3);';
+        const query = 'INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4) returning *;';
         // Pass your parameters in an array
-        const values = [employee.firstName, employee.lastName, employee.roleId, employee.departmentId];
+        const values = [employee.firstName, employee.lastName, employee.roleId, employee.managerId];
         // execute and return
         const result = await client.query(query, values);
         // console log result
@@ -171,12 +174,36 @@ async function addEmployee() {
         // release connection from the pool
     }
     catch (err) {
-        console.error('Error inserting role:', err);
+        console.error('Error inserting new employee:', err);
     }
 }
-// async function updateEmployeeRole(){
-//     const client = await db.connect();
-//     const result =client.query('')
-//     console.log(result);
-// }
+async function updateEmployeeRole() {
+    const client = await pool.connect();
+    try {
+        await inquirer.prompt([
+            {
+                name: 'employeeId',
+                message: 'What is the employee ID?',
+                type: 'number',
+            },
+            {
+                name: 'employeeRole',
+                message: 'Enter a new role ID.',
+                type: 'number',
+            }
+        ])
+            .then(async (response) => {
+            await client.query(`UPDATE employee FROM SET role_id = ${response.employeeRole} WHERE id = ${response.employeeId} RETURNING *`, (_err, _result) => {
+                // const query = 'UPDATE employee FROM SET role_id = $1 WHERE id = $2 RETURNING *';
+                // const value = [response.employeeRole, response.employeeId]
+                // const result = await client.query()
+                console.log('Updated successfully!');
+                // console.table(result.rows);
+            });
+        });
+    }
+    catch (err) {
+        console.error('Error updating employee role:', err);
+    }
+}
 mainMenu();
